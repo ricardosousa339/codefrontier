@@ -2,7 +2,18 @@
 
 import pygame
 import os
+import sys
 from pathlib import Path
+
+
+def get_resource_path(relative_path):
+    """Retorna o caminho correto para recursos, funciona tanto em desenvolvimento quanto no executável PyInstaller"""
+    if hasattr(sys, '_MEIPASS'):
+        # Quando empacotado com PyInstaller
+        return Path(sys._MEIPASS) / relative_path
+    # Em desenvolvimento
+    return Path(__file__).parent.parent.parent / relative_path
+
 
 class AssetManager:
     """Gerencia todos os assets do jogo (imagens, sons, fontes)"""
@@ -23,7 +34,7 @@ class AssetManager:
         self.images = {}
         self.sounds = {}
         self.fonts = {}
-        self.base_path = Path(__file__).parent.parent.parent / "assets"
+        self.base_path = get_resource_path("assets")
         
     def load_all_assets(self):
         """Carrega todos os assets do jogo"""
