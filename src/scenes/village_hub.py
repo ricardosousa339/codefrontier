@@ -28,7 +28,7 @@ class VillageHubScene(Scene):
             self.areas.append(area)
             
         # Botão de voltar
-        self.back_button = Button(50, 650, 150, 40, "← Voltar")
+        self.back_button = Button(50, 650, 180, 45, "< VOLTAR", font_size="small")
         
         # Personagem do jogador no centro
         self.player_x = SCREEN_WIDTH // 2
@@ -59,7 +59,7 @@ class VillageHubScene(Scene):
         self.back_button.update(mouse_pos, mouse_pressed)
         
         for area in self.areas:
-            area.update(mouse_pos)
+            area.update(mouse_pos, dt)
             
         # Animação do personagem
         self.player_animation = (self.player_animation + dt * 2) % (2 * math.pi)

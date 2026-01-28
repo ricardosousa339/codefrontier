@@ -370,14 +370,18 @@ class VillageArea:
         self.icon = icon
         self.rect = pygame.Rect(x - 80, y - 80, 160, 160)
         self.is_hovered = False
+        self.pulse = 0  # Para animações
         
-    def update(self, mouse_pos):
+    def update(self, mouse_pos, dt=0.016):
         """Atualiza a área"""
         self.is_hovered = self.rect.collidepoint(mouse_pos)
+        if self.is_hovered:
+            self.pulse += dt * 4
         
     def draw(self, screen, font):
         """Desenha a área com placa de seta apontando para a locação"""
         from src.utils import assets
+        import math
         
         # Determinar direção da seta baseado na posição (esquerda ou direita do centro)
         center_x = 640  # SCREEN_WIDTH // 2
@@ -420,11 +424,53 @@ class VillageArea:
             text_rect = text.get_rect(center=sign_rect.center)
             screen.blit(text, text_rect)
         
-        # Highlight quando hover
+        # Efeito discreto quando hover
         if self.is_hovered:
-            # Borda brilhante ao redor da área da locação
-            pygame.draw.rect(screen, Colors.GOLD, 
-                           (self.x - 95, self.y - 95, 190, 150), 3, border_radius=10)
+            # Cor baseada na área
+            area_colors = {
+                "training": (255, 200, 100),    # Amarelo quente
+                "potions": (150, 100, 255),     # Roxo mágico
+                "arena": (255, 100, 100),       # Vermelho batalha
+                "greenhouse": (100, 255, 150)   # Verde natureza
+            }
+            color = area_colors.get(self.area_id, Colors.GOLD)
+            
+            # Apenas 6 partículas pequenas orbitando
+            num_particles = 6
+            orbit_radius = 90
+            for i in range(num_particles):
+                angle = self.pulse + (i * 2 * math.pi / num_particles)
+                px = self.x + math.cos(angle) * orbit_radius
+                py = self.y - 30 + math.sin(angle) * (orbit_radius * 0.5)
+                
+                # Tamanho fixo pequeno
+                size = 3
+                
+                # Alpha mais suave
+                alpha = int(80 + 40 * math.sin(self.pulse * 2 + i * 0.5))
+                
+                # Desenhar partícula quadrada pequena
+                particle_surface = pygame.Surface((size, size), pygame.SRCALPHA)
+                pygame.draw.rect(particle_surface, (*color, alpha), (0, 0, size, size))
+                screen.blit(particle_surface, (px - size//2, py - size//2))
+            
+            # Borda retro simples nos cantos
+            border_alpha = int(120 + 40 * math.sin(self.pulse * 2))
+            border_surface = pygame.Surface((200, 160), pygame.SRCALPHA)
+            border_color = (*color, border_alpha)
+            
+            # Cantos superiores (menores)
+            pygame.draw.rect(border_surface, border_color, (0, 0, 12, 3))
+            pygame.draw.rect(border_surface, border_color, (0, 0, 3, 12))
+            pygame.draw.rect(border_surface, border_color, (188, 0, 12, 3))
+            pygame.draw.rect(border_surface, border_color, (197, 0, 3, 12))
+            # Cantos inferiores
+            pygame.draw.rect(border_surface, border_color, (0, 157, 12, 3))
+            pygame.draw.rect(border_surface, border_color, (0, 148, 3, 12))
+            pygame.draw.rect(border_surface, border_color, (188, 157, 12, 3))
+            pygame.draw.rect(border_surface, border_color, (197, 148, 3, 12))
+            
+            screen.blit(border_surface, (self.x - 100, self.y - 110))
             
     def is_clicked(self, event):
         """Verifica se a área foi clicada"""
