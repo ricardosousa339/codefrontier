@@ -368,7 +368,7 @@ class VillageArea:
         self.area_id = area_id
         self.area_data = area_data
         self.icon = icon
-        self.rect = pygame.Rect(x - 60, y - 60, 120, 120)
+        self.rect = pygame.Rect(x - 80, y - 80, 160, 160)
         self.is_hovered = False
         
     def update(self, mouse_pos):
@@ -376,33 +376,55 @@ class VillageArea:
         self.is_hovered = self.rect.collidepoint(mouse_pos)
         
     def draw(self, screen, font):
-        """Desenha a área"""
-        # Placeholder para ícone da área
-        if self.icon:
-            icon_rect = self.icon.get_rect(center=(self.x, self.y))
-            screen.blit(self.icon, icon_rect)
+        """Desenha a área com placa de seta apontando para a locação"""
+        from src.utils import assets
+        
+        # Determinar direção da seta baseado na posição (esquerda ou direita do centro)
+        center_x = 640  # SCREEN_WIDTH // 2
+        is_left_side = self.x < center_x
+        
+        # Carregar a placa de seta apropriada (invertido: esquerda usa seta esquerda, direita usa seta direita)
+        if is_left_side:
+            sign_img = assets.get_image("sign_arrow_left")
         else:
-            pygame.draw.circle(screen, Colors.BROWN_LIGHT, (self.x, self.y), 50)
+            sign_img = assets.get_image("sign_arrow_right")
+        
+        # Calcular posição da placa (afastada da locação, em direção ao centro)
+        # Offset de 45° em direção ao centro
+        offset_x = 120 if is_left_side else -120
+        offset_y = 80 if self.y < 360 else -50  # Ajuste baseado se está acima ou abaixo do centro
+        
+        sign_x = self.x + offset_x
+        sign_y = self.y + offset_y
+        
+        if sign_img:
+            # Escalar a placa para tamanho apropriado
+            sign_scaled = pygame.transform.scale(sign_img, (180, 120))
+            sign_rect = sign_scaled.get_rect(center=(sign_x, sign_y))
+            screen.blit(sign_scaled, sign_rect)
             
-        # Placa indicadora
-        sign_rect = pygame.Rect(self.x - 50, self.y + 55, 100, 30)
-        
-        # Poste da placa
-        pygame.draw.rect(screen, (139, 90, 43), (self.x - 5, self.y + 60, 10, 40))
-        
-        # Placa
-        pygame.draw.rect(screen, (180, 140, 100), sign_rect, border_radius=3)
-        pygame.draw.rect(screen, (100, 70, 40), sign_rect, 2, border_radius=3)
-        
-        # Texto
-        small_font = pygame.font.Font(None, 22)
-        text = small_font.render(self.area_data["name"], True, Colors.TEXT_DARK)
-        text_rect = text.get_rect(center=sign_rect.center)
-        screen.blit(text, text_rect)
+            # Texto na placa - posição ajustada para dentro da seta
+            small_font = pygame.font.SysFont("arial", 14, bold=True)
+            text = small_font.render(self.area_data["name"], True, (60, 40, 20))
+            # Centralizar texto na parte da placa (ajuste para ficar dentro do corpo da seta)
+            text_offset_x = 8 if is_left_side else -8
+            text_rect = text.get_rect(center=(sign_x + text_offset_x, sign_y - 20))
+            screen.blit(text, text_rect)
+        else:
+            # Fallback: placa retangular simples
+            sign_rect = pygame.Rect(sign_x - 50, sign_y - 15, 100, 30)
+            pygame.draw.rect(screen, (180, 140, 100), sign_rect, border_radius=3)
+            pygame.draw.rect(screen, (100, 70, 40), sign_rect, 2, border_radius=3)
+            small_font = pygame.font.SysFont("arial", 14, bold=True)
+            text = small_font.render(self.area_data["name"], True, (60, 40, 20))
+            text_rect = text.get_rect(center=sign_rect.center)
+            screen.blit(text, text_rect)
         
         # Highlight quando hover
         if self.is_hovered:
-            pygame.draw.circle(screen, (*Colors.GOLD, 100), (self.x, self.y), 55, 3)
+            # Borda brilhante ao redor da área da locação
+            pygame.draw.rect(screen, Colors.GOLD, 
+                           (self.x - 95, self.y - 95, 190, 150), 3, border_radius=10)
             
     def is_clicked(self, event):
         """Verifica se a área foi clicada"""

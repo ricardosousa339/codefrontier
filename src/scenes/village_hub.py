@@ -137,8 +137,8 @@ class VillageHubScene(Scene):
         # Tentar carregar a imagem da locação
         location_img = assets.get_image(area.area_id)
         if location_img:
-            # Escalar para tamanho apropriado (150x100 para caber bem)
-            img_scaled = pygame.transform.scale(location_img, (180, 120))
+            # Escalar para tamanho apropriado (dobrado)
+            img_scaled = pygame.transform.scale(location_img, (360, 240))
             # Centralizar na posição
             img_rect = img_scaled.get_rect(center=(x, y - 30))
             screen.blit(img_scaled, img_rect)
