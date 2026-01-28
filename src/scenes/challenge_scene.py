@@ -41,10 +41,10 @@ class ChallengeScene(Scene):
         self.back_button = Button(20, 20, 140, 40, "VOLTAR", font_size="small")
         self.run_button = Button(
             SCREEN_WIDTH // 2 + 30, SCREEN_HEIGHT // 2 + 50,
-            180, 45, "EXECUTAR", Colors.GREEN, (80, 220, 80), font_size="small"
+            220, 45, "EXECUTAR", Colors.GREEN, (80, 220, 80), font_size="small"
         )
         self.hint_button = Button(
-            SCREEN_WIDTH // 2 + 230, SCREEN_HEIGHT // 2 + 50,
+            SCREEN_WIDTH // 2 + 280, SCREEN_HEIGHT // 2 + 50,
             120, 45, "DICA", Colors.BLUE, (100, 150, 255), font_size="small"
         )
         
@@ -363,7 +363,7 @@ class ForjaDeItens {
         # Sem fundo escuro - apenas os painéis por cima do challenge_bg
         
         # Título "Editor de Código" com fundo semi-transparente
-        font = assets.get_font("large")
+        font = assets.get_font("medium")
         title = font.render(f"Editor de Código", True, Colors.TEXT_LIGHT)
         # Fundo do título
         title_bg = pygame.Surface((SCREEN_WIDTH // 2 - 20, 50), pygame.SRCALPHA)

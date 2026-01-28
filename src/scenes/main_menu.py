@@ -51,6 +51,10 @@ class MainMenuScene(Scene):
         
         # Animação do portal
         self.portal_pulse = 0
+        self.portal_frames = []
+        self.portal_frame_index = 0
+        self.portal_anim_timer = 0.0
+        self.portal_anim_fps = 10
         
     def handle_event(self, event):
         """Processa eventos"""
@@ -85,6 +89,28 @@ class MainMenuScene(Scene):
             
         # Animação do portal
         self.portal_pulse = (self.portal_pulse + dt * 2) % (2 * math.pi)
+        self._update_portal_animation(dt)
+
+    def _update_portal_animation(self, dt):
+        """Atualiza o frame do portal animado"""
+        # Lazy-load do spritesheet
+        if not self.portal_frames:
+            sheet = assets.get_image("portal_animated")
+            if sheet:
+                frame_count = 8
+                frame_w = sheet.get_width() // frame_count
+                frame_h = sheet.get_height()
+                for i in range(frame_count):
+                    frame = sheet.subsurface(pygame.Rect(i * frame_w, 0, frame_w, frame_h)).copy()
+                    self.portal_frames.append(frame)
+
+        if not self.portal_frames:
+            return
+
+        self.portal_anim_timer += dt
+        if self.portal_anim_timer >= 1.0 / self.portal_anim_fps:
+            self.portal_anim_timer = 0.0
+            self.portal_frame_index = (self.portal_frame_index + 1) % len(self.portal_frames)
         
     def draw(self, screen):
         """Desenha a cena"""
@@ -157,11 +183,24 @@ class MainMenuScene(Scene):
         """Desenha o portal animado"""
         cx, cy = SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 80
         
-        # Tentar usar sprite se existir
+        # Tentar usar spritesheet animado se existir
+        if self.portal_frames:
+            frame = self.portal_frames[self.portal_frame_index]
+            base_scale = 4.0
+            scale = base_scale * (1.0 + 0.05 * math.sin(self.portal_pulse))
+            
+            scaled_w = int(frame.get_width() * scale)
+            scaled_h = int(frame.get_height() * scale)
+            
+            portal_scaled = pygame.transform.scale(frame, (scaled_w, scaled_h))
+            portal_rect = portal_scaled.get_rect(center=(cx, cy))
+            screen.blit(portal_scaled, portal_rect)
+            return
+
+        # Tentar usar sprite estático se existir
         portal_img = assets.get_image("portal")
         if portal_img:
-            # Animar escala do portal levemente (Reduzido para 70% do tamanho para não sobrepor título)
-            base_scale = 0.7
+            base_scale = 1.5
             scale = base_scale * (1.0 + 0.05 * math.sin(self.portal_pulse))
             
             scaled_w = int(portal_img.get_width() * scale)

@@ -131,10 +131,20 @@ class VillageHubScene(Scene):
         pygame.draw.polygon(screen, (100, 60, 30), points, 5)
         
     def _draw_area_building(self, screen, area):
-        """Desenha um prédio placeholder para a área"""
+        """Desenha o prédio/locação usando o asset de imagem"""
         x, y = area.x, area.y
         
-        # Diferentes estilos por área
+        # Tentar carregar a imagem da locação
+        location_img = assets.get_image(area.area_id)
+        if location_img:
+            # Escalar para tamanho apropriado (150x100 para caber bem)
+            img_scaled = pygame.transform.scale(location_img, (180, 120))
+            # Centralizar na posição
+            img_rect = img_scaled.get_rect(center=(x, y - 30))
+            screen.blit(img_scaled, img_rect)
+            return
+        
+        # Fallback: Desenhar formas simples se não tiver imagem
         if area.area_id == "training":
             # Torre de treinamento
             pygame.draw.rect(screen, (150, 130, 110), (x - 50, y - 80, 100, 100))

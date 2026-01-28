@@ -90,20 +90,69 @@ class ModuleCard:
     def draw(self, screen, font):
         """Desenha o card na tela"""
         import math
+        import random
         
-        # Efeito de brilho quando hover
+        # Efeito de hover elegante estilo pixel art
         if self.is_hovered:
-            glow_size = int(10 + 5 * math.sin(self.pulse))
-            glow_rect = self.rect.inflate(glow_size * 2, glow_size * 2)
-            glow_surface = pygame.Surface((glow_rect.width, glow_rect.height), pygame.SRCALPHA)
-            pygame.draw.ellipse(glow_surface, (*self.module_data["color"], 80), 
-                              (0, 0, glow_rect.width, glow_rect.height))
-            screen.blit(glow_surface, glow_rect.topleft)
+            color = self.module_data["color"]
+            
+            # Partículas pixeladas flutuando ao redor
+            random.seed(42)  # Seed fixa para consistência
+            for i in range(12):
+                # Posição base circular ao redor do ícone
+                angle = (i / 12) * 2 * math.pi + self.pulse
+                base_radius = 70 + math.sin(self.pulse * 2 + i) * 10
+                
+                px = self.x + int(math.cos(angle) * base_radius)
+                py = (self.y - 20) + int(math.sin(angle) * base_radius * 0.6)
+                
+                # Tamanho do pixel (varia entre 3 e 6)
+                size = 3 + int(abs(math.sin(self.pulse + i)) * 3)
+                
+                # Alpha pulsante
+                alpha = int(150 + 100 * math.sin(self.pulse * 2 + i * 0.5))
+                alpha = max(50, min(255, alpha))
+                
+                # Desenhar pixel quadrado (estilo pixel art)
+                pixel_surface = pygame.Surface((size, size), pygame.SRCALPHA)
+                pixel_surface.fill((*color, alpha))
+                screen.blit(pixel_surface, (px - size//2, py - size//2))
+            
+            # Borda pixelada brilhante ao redor do ícone
+            border_alpha = int(180 + 75 * math.sin(self.pulse * 3))
+            border_surface = pygame.Surface((120, 120), pygame.SRCALPHA)
+            
+            # Desenhar borda quadrada estilo retro (cantos destacados)
+            border_color = (*color, border_alpha)
+            # Cantos superiores
+            pygame.draw.rect(border_surface, border_color, (0, 0, 15, 4))
+            pygame.draw.rect(border_surface, border_color, (0, 0, 4, 15))
+            pygame.draw.rect(border_surface, border_color, (105, 0, 15, 4))
+            pygame.draw.rect(border_surface, border_color, (116, 0, 4, 15))
+            # Cantos inferiores
+            pygame.draw.rect(border_surface, border_color, (0, 116, 15, 4))
+            pygame.draw.rect(border_surface, border_color, (0, 105, 4, 15))
+            pygame.draw.rect(border_surface, border_color, (105, 116, 15, 4))
+            pygame.draw.rect(border_surface, border_color, (116, 105, 4, 15))
+            
+            screen.blit(border_surface, (self.x - 60, self.y - 80))
+            
+            # Escala sutil no ícone (efeito de "destaque")
+            scale_factor = 1.0 + 0.05 * math.sin(self.pulse * 2)
+        else:
+            scale_factor = 1.0
         
-        # Ícone do módulo (círculo com cor)
+        # Ícone do módulo
         if self.icon:
-            icon_rect = self.icon.get_rect(center=(self.x, self.y - 20))
-            screen.blit(self.icon, icon_rect)
+            if self.is_hovered and scale_factor != 1.0:
+                new_size = (int(self.icon.get_width() * scale_factor), 
+                           int(self.icon.get_height() * scale_factor))
+                scaled_icon = pygame.transform.scale(self.icon, new_size)
+                icon_rect = scaled_icon.get_rect(center=(self.x, self.y - 20))
+                screen.blit(scaled_icon, icon_rect)
+            else:
+                icon_rect = self.icon.get_rect(center=(self.x, self.y - 20))
+                screen.blit(self.icon, icon_rect)
         else:
             pygame.draw.circle(screen, self.module_data["color"], 
                              (self.x, self.y - 20), 50)
@@ -214,37 +263,58 @@ class ChatBox:
         # Borda
         pygame.draw.rect(screen, Colors.GOLD, self.rect, 2, border_radius=10)
         
-        # Mensagens
-        y_offset = 10
-        small_font = pygame.font.Font(None, 20)
+        # Mensagens - usar fonte do sistema que suporte acentos
+        small_font = pygame.font.SysFont("arial", 14)
+        max_width = self.rect.width - 80  # Espaço para o ícone do assistente
+        y_offset = 8
         for msg in self.messages[-3:]:  # Mostrar últimas 3
             color = Colors.CYAN if msg["is_ai"] else Colors.WHITE
-            text = small_font.render(msg["text"][:50], True, color)
-            screen.blit(text, (self.rect.x + 10, self.rect.y + y_offset))
-            y_offset += 25
+            
+            # Quebrar texto em múltiplas linhas se necessário
+            words = msg["text"].split(" ")
+            lines = []
+            current_line = []
+            for word in words:
+                test_line = " ".join(current_line + [word])
+                if small_font.size(test_line)[0] <= max_width:
+                    current_line.append(word)
+                else:
+                    if current_line:
+                        lines.append(" ".join(current_line))
+                    current_line = [word]
+            if current_line:
+                lines.append(" ".join(current_line))
+            
+            # Renderizar cada linha (máximo 2 linhas por mensagem)
+            for line in lines[:2]:
+                text = small_font.render(line, True, color)
+                screen.blit(text, (self.rect.x + 10, self.rect.y + y_offset))
+                y_offset += 18
+            y_offset += 4  # Espaço extra entre mensagens
             
         # Campo de input
         pygame.draw.rect(screen, (60, 60, 70), self.input_rect, border_radius=5)
         pygame.draw.rect(screen, Colors.WHITE if self.is_active else (100, 100, 100), 
                         self.input_rect, 1, border_radius=5)
         
-        # Texto placeholder ou input
+        # Texto placeholder ou input - usar fonte do sistema
+        input_font = pygame.font.SysFont("arial", 14)
         if self.input_text:
-            input_surface = small_font.render(self.input_text[-30:], True, Colors.WHITE)
+            input_surface = input_font.render(self.input_text[-40:], True, Colors.WHITE)
         else:
-            input_surface = small_font.render("Digite sua dúvida aqui...", True, (150, 150, 150))
+            input_surface = input_font.render("Digite sua dúvida aqui...", True, (150, 150, 150))
         screen.blit(input_surface, (self.input_rect.x + 5, self.input_rect.y + 8))
         
         # Ícone do assistente
         if assistant_img:
             # Redimensionar assistente para caber melhor
             assist_scaled = pygame.transform.scale(assistant_img, (60, 60))
-            screen.blit(assist_scaled, (self.rect.right - 65, self.rect.bottom - 75))
+            screen.blit(assist_scaled, (self.rect.right - 58, self.rect.bottom - 95))
             
-        # Label "Ajuda CinthIA!" - dentro do rect
-        tiny_font = pygame.font.Font(None, 16)
-        label = tiny_font.render("Ajuda CinthIA!", True, Colors.GOLD)
-        screen.blit(label, (self.rect.right - 75, self.rect.bottom - 12))
+        # Label "Ajuda CinthIA!" - usar fonte do sistema
+        label_font = pygame.font.SysFont("arial", 12, bold=True)
+        label = label_font.render("CinthIA", True, Colors.GOLD)
+        screen.blit(label, (self.rect.right - 52, self.rect.bottom - 30))
 
 
 class CodeEditor:
