@@ -38,14 +38,14 @@ class ChallengeScene(Scene):
         self.health_bar = HealthBar(SCREEN_WIDTH - 200, 20, 5)
         
         # Botões
-        self.back_button = Button(20, 20, 120, 40, "← Voltar")
+        self.back_button = Button(20, 20, 140, 40, "VOLTAR", font_size="small")
         self.run_button = Button(
-            SCREEN_WIDTH // 2 + 20, SCREEN_HEIGHT // 2 + 50,
-            150, 45, "▶ Executar", Colors.GREEN, (80, 220, 80)
+            SCREEN_WIDTH // 2 + 30, SCREEN_HEIGHT // 2 + 50,
+            180, 45, "EXECUTAR", Colors.GREEN, (80, 220, 80), font_size="small"
         )
         self.hint_button = Button(
-            SCREEN_WIDTH // 2 + 190, SCREEN_HEIGHT // 2 + 50,
-            150, 45, "💡 Dica", Colors.BLUE, (100, 150, 255)
+            SCREEN_WIDTH // 2 + 230, SCREEN_HEIGHT // 2 + 50,
+            120, 45, "DICA", Colors.BLUE, (100, 150, 255), font_size="small"
         )
         
         # Estado do desafio
@@ -195,11 +195,19 @@ class ForjaDeItens {
         
     def draw(self, screen):
         """Desenha a cena"""
+        # Fundo da tela inteira
+        bg = assets.get_image("challenge_bg")
+        if bg:
+            bg_scaled = pygame.transform.scale(bg, (SCREEN_WIDTH, SCREEN_HEIGHT))
+            screen.blit(bg_scaled, (0, 0))
+        else:
+            screen.fill((135, 206, 235))  # Fallback: céu azul
+        
         # Dividir a tela
-        # Lado esquerdo: cena visual do pomar
+        # Lado esquerdo: elementos dinâmicos da cena (personagens, frutas, etc)
         self._draw_visual_scene(screen)
         
-        # Lado direito: código e chat
+        # Lado direito: código e chat (painel por cima do fundo)
         self._draw_code_area(screen)
         
         # Elementos de UI
@@ -213,21 +221,11 @@ class ForjaDeItens {
             self.health_bar.draw(screen, heart_full, heart_empty)
             
     def _draw_visual_scene(self, screen):
-        """Desenha a cena visual do desafio (pomar)"""
-        # Fundo do pomar
-        pygame.draw.rect(screen, (135, 206, 235), self.visual_area)  # Céu
+        """Desenha a cena visual do desafio"""
+        # O fundo challenge_bg já contém as árvores e cenário
+        # Aqui apenas desenhamos os personagens e a caixa de missão
         
-        # Grama
-        pygame.draw.rect(screen, (34, 139, 34), 
-                        (0, SCREEN_HEIGHT - 150, SCREEN_WIDTH // 2, 150))
-        
-        # Árvores de fundo
-        self._draw_trees_background(screen)
-        
-        # Árvore principal com frutas
-        self._draw_main_tree(screen)
-        
-        # Personagens coletando
+        # Personagens coletando (Kayan e amiga)
         self._draw_collecting_characters(screen)
         
         # Caixa de missão
@@ -281,72 +279,97 @@ class ForjaDeItens {
                                   (fx - 12, fy + offset - 15, 24, 30), 2)
                                   
     def _draw_collecting_characters(self, screen):
-        """Desenha personagens coletando frutas"""
+        """Desenha personagem Kayan"""
         import math
         
-        # Personagem 1 (camisa vermelha)
-        char1_x = 150
-        char1_y = SCREEN_HEIGHT - 200
+        # Kayan - maior e mais para baixo
+        char1_x = 80
+        char1_y = SCREEN_HEIGHT - 180
         bounce = math.sin(self.animation_time * 3) * 5
         
-        # Corpo
-        pygame.draw.rect(screen, (200, 50, 50), (char1_x - 15, char1_y + bounce, 30, 40))
-        # Cabeça
-        pygame.draw.circle(screen, (139, 90, 43), (char1_x, char1_y - 15 + bounce), 18)
-        # Cabelo
-        pygame.draw.ellipse(screen, (30, 30, 30), (char1_x - 15, char1_y - 30 + bounce, 30, 20))
-        # Braços levantados
-        pygame.draw.line(screen, (139, 90, 43), (char1_x - 15, char1_y + 10 + bounce), 
-                        (char1_x - 30, char1_y - 20 + bounce), 5)
-        pygame.draw.line(screen, (139, 90, 43), (char1_x + 15, char1_y + 10 + bounce), 
-                        (char1_x + 30, char1_y - 20 + bounce), 5)
-        
-        # Personagem 2 (camisa azul)
-        char2_x = 280
-        char2_y = SCREEN_HEIGHT - 180
-        bounce2 = math.sin(self.animation_time * 3 + 1) * 5
-        
-        pygame.draw.rect(screen, (50, 100, 200), (char2_x - 15, char2_y + bounce2, 30, 40))
-        pygame.draw.circle(screen, (101, 67, 33), (char2_x, char2_y - 15 + bounce2), 18)
-        pygame.draw.ellipse(screen, (30, 30, 30), (char2_x - 12, char2_y - 28 + bounce2, 24, 16))
-        pygame.draw.line(screen, (101, 67, 33), (char2_x - 15, char2_y + 10 + bounce2), 
-                        (char2_x - 35, char2_y - 30 + bounce2), 5)
-        pygame.draw.line(screen, (101, 67, 33), (char2_x + 15, char2_y + 10 + bounce2), 
-                        (char2_x + 35, char2_y - 30 + bounce2), 5)
+        kayan = assets.get_image("npc_kayan")
+        if kayan:
+            # Aumentado para 120x120
+            kayan_scaled = pygame.transform.scale(kayan, (120, 120))
+            screen.blit(kayan_scaled, (char1_x, char1_y + bounce))
+        else:
+            # Fallback (Corpo Vermelho)
+            pygame.draw.rect(screen, (200, 50, 50), (char1_x, char1_y + bounce, 50, 70))
+            pygame.draw.circle(screen, (139, 90, 43), (char1_x + 25, char1_y - 20 + bounce), 25)
                         
     def _draw_mission_box(self, screen):
         """Desenha a caixa de missão"""
-        # Fundo da caixa
-        box_rect = pygame.Rect(20, 60, SCREEN_WIDTH // 2 - 40, 100)
+        # Fundo da caixa - aumentado para caber o texto
+        box_rect = pygame.Rect(20, 60, SCREEN_WIDTH // 2 - 40, 120)
         pygame.draw.rect(screen, (255, 230, 150), box_rect, border_radius=10)
         pygame.draw.rect(screen, (200, 150, 50), box_rect, 3, border_radius=10)
         
         # Ícone de missão
         pygame.draw.circle(screen, (100, 100, 200), (box_rect.right - 30, box_rect.top + 30), 20)
         
-        # Título da missão
-        font = assets.get_font("medium")
-        small_font = assets.get_font("small")
+        # Título da missão (com quebra de linha automática)
+        font = assets.get_font("small")
+        small_font = assets.get_font("tiny")
         
-        title = font.render(self.challenge_data["title"], True, Colors.TEXT_DARK)
-        screen.blit(title, (box_rect.x + 15, box_rect.y + 15))
+        # Quebrar título se for muito longo
+        title_text = self.challenge_data["title"]
+        max_width = box_rect.width - 80  # Espaço para o ícone
         
-        # Dica
-        hint = small_font.render(self.challenge_data["hint"], True, (100, 100, 100))
-        screen.blit(hint, (box_rect.x + 15, box_rect.y + 50))
+        # Renderiza e verifica se cabe
+        words = title_text.split(" ")
+        lines = []
+        current_line = []
+        for word in words:
+            test_line = " ".join(current_line + [word])
+            if font.size(test_line)[0] <= max_width:
+                current_line.append(word)
+            else:
+                if current_line:
+                    lines.append(" ".join(current_line))
+                current_line = [word]
+        if current_line:
+            lines.append(" ".join(current_line))
+        
+        y_pos = box_rect.y + 12
+        for line in lines[:2]:  # Máximo 2 linhas
+            title = font.render(line, True, Colors.TEXT_DARK)
+            screen.blit(title, (box_rect.x + 15, y_pos))
+            y_pos += 22
+        
+        # Dica (também com quebra)
+        hint_text = self.challenge_data["hint"]
+        hint_words = hint_text.split(" ")
+        hint_lines = []
+        current_hint_line = []
+        for word in hint_words:
+            test_line = " ".join(current_hint_line + [word])
+            if small_font.size(test_line)[0] <= max_width:
+                current_hint_line.append(word)
+            else:
+                if current_hint_line:
+                    hint_lines.append(" ".join(current_hint_line))
+                current_hint_line = [word]
+        if current_hint_line:
+            hint_lines.append(" ".join(current_hint_line))
+        
+        y_pos += 5
+        for line in hint_lines[:2]:  # Máximo 2 linhas
+            hint = small_font.render(line, True, (100, 100, 100))
+            screen.blit(hint, (box_rect.x + 15, y_pos))
+            y_pos += 18
         
     def _draw_code_area(self, screen):
         """Desenha a área de código"""
-        # Fundo escuro
-        pygame.draw.rect(screen, (25, 25, 35), self.code_area)
+        # Sem fundo escuro - apenas os painéis por cima do challenge_bg
         
-        # Barra superior com título do módulo
-        header_rect = pygame.Rect(SCREEN_WIDTH // 2, 0, SCREEN_WIDTH // 2, 60)
-        pygame.draw.rect(screen, (35, 35, 50), header_rect)
-        
+        # Título "Editor de Código" com fundo semi-transparente
         font = assets.get_font("large")
         title = font.render(f"Editor de Código", True, Colors.TEXT_LIGHT)
-        screen.blit(title, (SCREEN_WIDTH // 2 + 20, 15))
+        # Fundo do título
+        title_bg = pygame.Surface((SCREEN_WIDTH // 2 - 20, 50), pygame.SRCALPHA)
+        pygame.draw.rect(title_bg, (35, 35, 50, 200), (0, 0, SCREEN_WIDTH // 2 - 20, 50), border_radius=8)
+        screen.blit(title_bg, (SCREEN_WIDTH // 2 + 10, 10))
+        screen.blit(title, (SCREEN_WIDTH // 2 + 20, 20))
         
         # Editor de código
         self.code_editor.draw(screen, font)

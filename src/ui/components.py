@@ -2,6 +2,7 @@
 
 import pygame
 from src.config import Colors, FONT_SIZES
+from src.utils import assets
 
 class Button:
     """Botão clicável com estilo RPG"""
@@ -24,8 +25,17 @@ class Button:
         self.is_hovered = self.rect.collidepoint(mouse_pos) and self.enabled
         self.is_pressed = self.is_hovered and mouse_pressed[0]
         
-    def draw(self, screen, font):
-        """Desenha o botão na tela"""
+    def draw(self, screen, font=None):
+        """Desenha o botão na tela
+        
+        Args:
+            screen: Superfície onde desenhar
+            font: (Opcional) Fonte a ser usada. Se None, usa self.font_size do assets.
+        """
+        # Se nenhuma fonte for passada, pega do asset_manager usando o tamanho configurado no botão
+        if font is None:
+            font = assets.get_font(self.font_size)
+            
         # Cor atual baseada no estado
         current_color = self.hover_color if self.is_hovered else self.color
         if not self.enabled:
@@ -61,12 +71,13 @@ class ModuleCard:
     def __init__(self, x, y, module_id, module_data, icon=None):
         self.x = x
         self.y = y
-        self.width = 180
-        self.height = 180
+        self.width = 220  # Aumentado para corresponder à largura visual
+        self.height = 200  # Altura total: ícone + placa
         self.module_id = module_id
         self.module_data = module_data
         self.icon = icon
-        self.rect = pygame.Rect(x - self.width//2, y - self.height//2, 
+        # Área de clique cobre o ícone (acima) e a placa (abaixo)
+        self.rect = pygame.Rect(x - self.width//2, y - 80, 
                                 self.width, self.height)
         self.is_hovered = False
         self.pulse = 0
@@ -100,19 +111,48 @@ class ModuleCard:
                              (self.x, self.y - 20), 50, 3)
         
         # Placa de madeira com nome
-        label_rect = pygame.Rect(self.x - 80, self.y + 45, 160, 50)
+        # Aumentar tamanho da placa para caber nomes longos
+        label_width = 220
+        label_height = 80
+        label_rect = pygame.Rect(self.x - label_width//2, self.y + 35, 
+                               label_width, label_height)
+        
         pygame.draw.rect(screen, Colors.BROWN_DARK, label_rect, border_radius=5)
         pygame.draw.rect(screen, (80, 50, 30), label_rect, 2, border_radius=5)
         
-        # Nome do módulo (quebrar em linhas se necessário)
-        name_lines = self.module_data["name"].split(" ")
+        # Nome do módulo (quebra de linha inteligente)
+        font = assets.get_font("tiny")
+        full_text = self.module_data["name"]
+        words = full_text.split(" ")
+        name_lines = []
+        current_line = []
+        
+        for word in words:
+            # Testa se a palavra cabe na linha atual (com margem de 20px total)
+            test_line = " ".join(current_line + [word])
+            if font.size(test_line.upper())[0] <= label_width - 20:
+                current_line.append(word)
+            else:
+                if current_line:
+                    name_lines.append(" ".join(current_line))
+                current_line = [word]
+        
+        if current_line:
+            name_lines.append(" ".join(current_line))
+        
+        # Calcular altura total do texto para centralizar verticalmente
+        line_height = 18
+        total_text_height = len(name_lines) * line_height
+        
+        # Posição inicial Y para centralizar no label_rect
+        start_y = label_rect.centery - (total_text_height / 2) + (line_height / 2)
+        
         y_offset = 0
-        small_font = pygame.font.Font(None, 20)
         for line in name_lines:
-            text = small_font.render(line.upper(), True, Colors.TEXT_LIGHT)
-            text_rect = text.get_rect(center=(self.x, self.y + 58 + y_offset))
+            text = font.render(line.upper(), True, Colors.TEXT_LIGHT)
+            text_rect = text.get_rect(center=(self.x, start_y + y_offset))
             screen.blit(text, text_rect)
-            y_offset += 16
+            y_offset += line_height
             
     def is_clicked(self, event):
         """Verifica se o card foi clicado"""
@@ -197,11 +237,14 @@ class ChatBox:
         
         # Ícone do assistente
         if assistant_img:
-            screen.blit(assistant_img, (self.rect.right - 70, self.rect.bottom - 70))
+            # Redimensionar assistente para caber melhor
+            assist_scaled = pygame.transform.scale(assistant_img, (60, 60))
+            screen.blit(assist_scaled, (self.rect.right - 65, self.rect.bottom - 75))
             
-        # Label "Ajuda CinthIA!"
-        label = small_font.render("Ajuda CinthIA!", True, Colors.GOLD)
-        screen.blit(label, (self.rect.right - 85, self.rect.bottom - 15))
+        # Label "Ajuda CinthIA!" - dentro do rect
+        tiny_font = pygame.font.Font(None, 16)
+        label = tiny_font.render("Ajuda CinthIA!", True, Colors.GOLD)
+        screen.blit(label, (self.rect.right - 75, self.rect.bottom - 12))
 
 
 class CodeEditor:
@@ -224,23 +267,23 @@ class CodeEditor:
         pygame.draw.rect(screen, Colors.CODE_BG, self.rect, border_radius=8)
         pygame.draw.rect(screen, (60, 60, 60), self.rect, 2, border_radius=8)
         
-        # Linhas de código
-        code_font = pygame.font.Font(None, 22)
+        # Fonte monospace para código
+        code_font = pygame.font.SysFont("monospace", 18)
         y_offset = 10
         
         for i, line in enumerate(self.code_lines):
             # Colorir syntax básico
             color = Colors.TEXT_LIGHT
-            if line.strip().startswith("//"):
+            if line.strip().startswith("//") or line.strip().startswith("#"):
                 color = Colors.CODE_GREEN
-            elif "class " in line or "void " in line or "private " in line or "public " in line:
+            elif "class " in line or "void " in line or "private " in line or "public " in line or "def " in line:
                 color = Colors.CODE_BLUE
-            elif "using " in line or "import " in line:
+            elif "using " in line or "import " in line or "from " in line:
                 color = Colors.CODE_PURPLE
                 
             text = code_font.render(line, True, color)
             screen.blit(text, (self.rect.x + 15, self.rect.y + y_offset))
-            y_offset += 24
+            y_offset += 22
             
             if y_offset > self.rect.height - 20:
                 break

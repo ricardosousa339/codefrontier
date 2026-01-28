@@ -18,11 +18,13 @@ class MainMenuScene(Scene):
         
         self.buttons = {
             "play": Button(center_x - 100, 550, 200, 50, "JOGAR", 
-                          Colors.GREEN, (80, 220, 80)),
-            "village": Button(center_x - 100, 610, 200, 50, "VILAREJO"),
-            "settings": Button(center_x - 250, 670, 150, 40, "Configurações"),
-            "quit": Button(center_x + 100, 670, 150, 40, "Sair", 
-                          Colors.RED, (250, 80, 80))
+                          Colors.GREEN, (80, 220, 80), font_size="medium"),
+            "village": Button(center_x - 100, 610, 200, 50, "VILAREJO", 
+                              font_size="medium"),
+            "settings": Button(center_x - 250, 670, 240, 40, "CONFIGURAÇÕES", 
+                               font_size="small"),
+            "quit": Button(center_x + 10, 670, 150, 40, "SAIR", 
+                          Colors.RED, (250, 80, 80), font_size="medium")
         }
         
         # Cards dos módulos (posicionados como na imagem)
@@ -62,12 +64,11 @@ class MainMenuScene(Scene):
         if self.buttons["quit"].is_clicked(event):
             pygame.event.post(pygame.event.Event(pygame.QUIT))
             
-        # Verificar cliques nos cards de módulo
-        if self.show_module_select:
-            for card in self.module_cards:
-                if card.is_clicked(event):
-                    self.selected_module = card.module_id
-                    self.next_scene = "challenge"
+        # Verificar cliques nos cards de módulo (sempre disponíveis)
+        for card in self.module_cards:
+            if card.is_clicked(event):
+                self.selected_module = card.module_id
+                self.next_scene = "challenge"
                     
     def update(self, dt):
         """Atualiza a cena"""
@@ -103,8 +104,9 @@ class MainMenuScene(Scene):
         # Desenhar personagem
         player = assets.get_image("player")
         if player:
-            player_scaled = pygame.transform.scale(player, (128, 128))
-            screen.blit(player_scaled, (SCREEN_WIDTH//2 - 64, SCREEN_HEIGHT//2 - 30))
+            # Aumentado 1.5x (de 128 para 192)
+            player_scaled = pygame.transform.scale(player, (192, 192))
+            screen.blit(player_scaled, (SCREEN_WIDTH//2 - 96, SCREEN_HEIGHT//2 - 80))
             
         # Desenhar pet (pequeno cachorro/gato ao lado)
         self._draw_pet(screen)
@@ -122,7 +124,7 @@ class MainMenuScene(Scene):
             
         # Desenhar botões
         for button in self.buttons.values():
-            button.draw(screen, font)
+            button.draw(screen)
             
         # Título do jogo
         title_font = assets.get_font("huge")
@@ -155,7 +157,22 @@ class MainMenuScene(Scene):
         """Desenha o portal animado"""
         cx, cy = SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 80
         
-        # Efeito de brilho do portal
+        # Tentar usar sprite se existir
+        portal_img = assets.get_image("portal")
+        if portal_img:
+            # Animar escala do portal levemente (Reduzido para 70% do tamanho para não sobrepor título)
+            base_scale = 0.7
+            scale = base_scale * (1.0 + 0.05 * math.sin(self.portal_pulse))
+            
+            scaled_w = int(portal_img.get_width() * scale)
+            scaled_h = int(portal_img.get_height() * scale)
+            
+            portal_scaled = pygame.transform.scale(portal_img, (scaled_w, scaled_h))
+            portal_rect = portal_scaled.get_rect(center=(cx, cy))
+            screen.blit(portal_scaled, portal_rect)
+            return
+
+        # Fallback para desenho vetorial caso imagem falhe ou não exista o asset
         for i in range(8):
             offset = math.sin(self.portal_pulse + i * 0.5) * 5
             alpha = 150 - i * 15
@@ -175,17 +192,30 @@ class MainMenuScene(Scene):
         
     def _draw_pet(self, screen):
         """Desenha o pet ao lado do personagem"""
-        # Pet simples (cachorrinho/gato com roupa)
-        pet_x = SCREEN_WIDTH // 2 + 80
-        pet_y = SCREEN_HEIGHT // 2 + 50
+        # Posição ajustada para a nova escala do player
+        pet_x = SCREEN_WIDTH // 2 + 50
+        pet_y = SCREEN_HEIGHT // 2 + 16
         
+        # Tentar carregar imagem do pet
+        pet_img = assets.get_image("pet")
+        if pet_img:
+            # Aumentado 1.5x (de 64 para 96 pixels)
+            pet_scaled = pygame.transform.scale(pet_img, (96, 96))
+            screen.blit(pet_scaled, (pet_x, pet_y))
+            return
+
+        # Fallback: Pet simples (cachorrinho/gato com roupa)
+        # Reajustando fallback para a nova escala
+        scale_f = 1.3
         # Corpo do pet
-        pygame.draw.ellipse(screen, (200, 180, 160), (pet_x, pet_y, 40, 30))
+        pygame.draw.ellipse(screen, (200, 180, 160), (pet_x, pet_y + 15, 40*scale_f, 30*scale_f))
         # Cabeça
-        pygame.draw.circle(screen, (200, 180, 160), (pet_x + 35, pet_y + 5), 15)
+        pygame.draw.circle(screen, (200, 180, 160), (pet_x + int(35*scale_f), pet_y + 15 + int(5*scale_f)), int(15*scale_f))
         # Orelhas
         pygame.draw.polygon(screen, (180, 160, 140), 
-                          [(pet_x + 25, pet_y - 5), (pet_x + 30, pet_y + 5), (pet_x + 35, pet_y - 8)])
+                          [(pet_x + int(25*scale_f), pet_y + 15 - int(5*scale_f)), 
+                           (pet_x + int(30*scale_f), pet_y + 15 + int(5*scale_f)), 
+                           (pet_x + int(35*scale_f), pet_y + 15 - int(8*scale_f))])
         pygame.draw.polygon(screen, (180, 160, 140), 
                           [(pet_x + 40, pet_y - 8), (pet_x + 35, pet_y + 5), (pet_x + 45, pet_y - 5)])
         # Olhos

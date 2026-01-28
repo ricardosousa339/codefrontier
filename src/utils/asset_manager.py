@@ -199,13 +199,44 @@ class AssetManager:
         
     def _load_fonts(self):
         """Carrega as fontes do jogo"""
-        # Usar fonte padrão do pygame por enquanto
-        self.fonts["small"] = pygame.font.Font(None, 20)
-        self.fonts["medium"] = pygame.font.Font(None, 28)
-        self.fonts["large"] = pygame.font.Font(None, 36)
-        self.fonts["title"] = pygame.font.Font(None, 52)
-        self.fonts["huge"] = pygame.font.Font(None, 72)
-        self.fonts["code"] = pygame.font.Font(None, 22)
+        fonts_path = self.base_path / "fonts"
+        
+        # Tenta carregar pixel.otf, pixel.ttf, ou usa None (fonte padrão)
+        pixel_font_path = fonts_path / "pixel.otf"
+        if not pixel_font_path.exists():
+            pixel_font_path = fonts_path / "pixel.ttf"
+            
+        font_source = str(pixel_font_path) if pixel_font_path.exists() else None
+        
+        if font_source:
+            print(f"[AssetManager] Carregando fonte personalizada: {pixel_font_path.name}")
+        else:
+            print("[AssetManager] Usando fonte padrão do sistema")
+
+        try:
+            self.fonts["tiny"] = pygame.font.Font(font_source, 16)
+            self.fonts["small"] = pygame.font.Font(font_source, 20)
+            self.fonts["medium"] = pygame.font.Font(font_source, 28)
+            self.fonts["large"] = pygame.font.Font(font_source, 36)
+            self.fonts["title"] = pygame.font.Font(font_source, 52)
+            self.fonts["huge"] = pygame.font.Font(font_source, 72)
+            
+            # Para código, idealmente usamos uma fonte monospace diferente, mas por enquanto usaremos a mesma ou padrão
+            # Se tiver uma fonte específica para código (ex: code.ttf), tente carregar aqui
+            code_font_path = fonts_path / "code.ttf"
+            code_font_source = str(code_font_path) if code_font_path.exists() else None
+            self.fonts["code"] = pygame.font.Font(code_font_source, 22)
+            
+        except Exception as e:
+            print(f"[AssetManager] Erro ao carregar fontes: {e}")
+            # Fallback para fonte padrão em caso de erro
+            self.fonts["tiny"] = pygame.font.Font(None, 16)
+            self.fonts["small"] = pygame.font.Font(None, 20)
+            self.fonts["medium"] = pygame.font.Font(None, 28)
+            self.fonts["large"] = pygame.font.Font(None, 36)
+            self.fonts["title"] = pygame.font.Font(None, 52)
+            self.fonts["huge"] = pygame.font.Font(None, 72)
+            self.fonts["code"] = pygame.font.Font(None, 22)
         
     def get_image(self, name):
         """Retorna uma imagem pelo nome"""
