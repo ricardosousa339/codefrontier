@@ -424,6 +424,7 @@ class VillageArea:
             text_rect = text.get_rect(center=sign_rect.center)
             screen.blit(text, text_rect)
         
+        #teste
         # Efeito discreto quando hover
         if self.is_hovered:
             # Cor baseada na área
