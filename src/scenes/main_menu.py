@@ -14,15 +14,25 @@ class MainMenuScene(Scene):
     def __init__(self, game):
         super().__init__(game)
         
-        # Botões do menu
+        # Botões do menu - centralizados
         center_x = SCREEN_WIDTH // 2
         
+        # Larguras dos botões
+        btn_next_w = 240
+        btn_settings_w = 240
+        btn_quit_w = 150
+        btn_spacing = 20
+        
+        # Largura total dos 3 botões + espaçamentos
+        total_width = btn_next_w + btn_settings_w + btn_quit_w + (btn_spacing * 2)
+        start_x = center_x - total_width // 2
+        
         self.buttons = {
-            "next_phase": Button(center_x - 520, 670, 240, 40, "PRÓXIMA FASE", 
+            "next_phase": Button(start_x, 670, btn_next_w, 40, "PRÓXIMA FASE", 
                                 Colors.GOLD, (255, 220, 100), Colors.TEXT_DARK, font_size="small"),
-            "settings": Button(center_x - 250, 670, 240, 40, "CONFIGURAÇÕES", 
+            "settings": Button(start_x + btn_next_w + btn_spacing, 670, btn_settings_w, 40, "CONFIGURAÇÕES", 
                                font_size="small"),
-            "quit": Button(center_x + 10, 670, 150, 40, "SAIR", 
+            "quit": Button(start_x + btn_next_w + btn_settings_w + btn_spacing * 2, 670, btn_quit_w, 40, "SAIR", 
                           Colors.RED, (250, 80, 80), font_size="medium")
         }
         
@@ -64,8 +74,8 @@ class MainMenuScene(Scene):
             random_module = random.choice(modules)
             self.selected_module = random_module
             
-            # Python vai para lesson, outros para challenge
-            if random_module == "python":
+            # Python e C# vão para lesson, outros para challenge
+            if random_module in ["python", "csharp"]:
                 self.next_scene = "lesson"
             else:
                 self.next_scene = "challenge"
@@ -77,8 +87,8 @@ class MainMenuScene(Scene):
         for card in self.module_cards:
             if card.is_clicked(event):
                 self.selected_module = card.module_id
-                # Python vai para a tela de lição
-                if card.module_id == "python":
+                # Python e C# vão para a tela de lição
+                if card.module_id in ["python", "csharp"]:
                     self.next_scene = "lesson"
                 else:
                     self.next_scene = "challenge"
