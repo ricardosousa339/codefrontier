@@ -2,6 +2,7 @@
 
 import pygame
 import math
+import random
 from .base_scene import Scene
 from src.config import Colors, MODULES, SCREEN_WIDTH, SCREEN_HEIGHT
 from src.ui import Button, ModuleCard, HealthBar
@@ -17,10 +18,8 @@ class MainMenuScene(Scene):
         center_x = SCREEN_WIDTH // 2
         
         self.buttons = {
-            "play": Button(center_x - 100, 550, 200, 50, "JOGAR", 
-                          Colors.GREEN, (80, 220, 80), font_size="medium"),
-            "village": Button(center_x - 100, 610, 200, 50, "VILAREJO", 
-                              font_size="medium"),
+            "next_phase": Button(center_x - 520, 670, 240, 40, "PRÓXIMA FASE", 
+                                Colors.GOLD, (255, 220, 100), Colors.TEXT_DARK, font_size="small"),
             "settings": Button(center_x - 250, 670, 240, 40, "CONFIGURAÇÕES", 
                                font_size="small"),
             "quit": Button(center_x + 10, 670, 150, 40, "SAIR", 
@@ -59,12 +58,18 @@ class MainMenuScene(Scene):
     def handle_event(self, event):
         """Processa eventos"""
         # Verificar cliques nos botões
-        if self.buttons["play"].is_clicked(event):
-            self.show_module_select = True
+        if self.buttons["next_phase"].is_clicked(event):
+            # Escolher um módulo aleatório
+            modules = list(MODULES.keys())
+            random_module = random.choice(modules)
+            self.selected_module = random_module
             
-        if self.buttons["village"].is_clicked(event):
-            self.next_scene = "village"
-            
+            # Python vai para lesson, outros para challenge
+            if random_module == "python":
+                self.next_scene = "lesson"
+            else:
+                self.next_scene = "challenge"
+        
         if self.buttons["quit"].is_clicked(event):
             pygame.event.post(pygame.event.Event(pygame.QUIT))
             
@@ -72,7 +77,11 @@ class MainMenuScene(Scene):
         for card in self.module_cards:
             if card.is_clicked(event):
                 self.selected_module = card.module_id
-                self.next_scene = "challenge"
+                # Python vai para a tela de lição
+                if card.module_id == "python":
+                    self.next_scene = "lesson"
+                else:
+                    self.next_scene = "challenge"
                     
     def update(self, dt):
         """Atualiza a cena"""
@@ -126,6 +135,13 @@ class MainMenuScene(Scene):
         
         # Desenhar portal no centro
         self._draw_portal(screen)
+        
+        # Desenhar plataforma embaixo do personagem
+        platform = assets.get_image("platform")
+        if platform:
+            # Proporção original 177x123, escalar 1.5x
+            platform_scaled = pygame.transform.scale(platform, (265, 185))
+            screen.blit(platform_scaled, (SCREEN_WIDTH//2 - 132, SCREEN_HEIGHT//2 + 20))
         
         # Desenhar personagem
         player = assets.get_image("player")
@@ -230,17 +246,28 @@ class MainMenuScene(Scene):
         screen.blit(inner_surface, (cx - 30, cy - 40))
         
     def _draw_pet(self, screen):
-        """Desenha o pet ao lado do personagem"""
-        # Posição ajustada para a nova escala do player
-        pet_x = SCREEN_WIDTH // 2 + 50
-        pet_y = SCREEN_HEIGHT // 2 + 16
+        """Desenha o pet ao lado do personagem com animação flutuante"""
+        # Posição base ajustada para a nova escala do player
+        base_x = SCREEN_WIDTH // 2 + 50
+        base_y = SCREEN_HEIGHT // 2 + 16
+        
+        # Animação flutuante em círculo (astronauta no espaço)
+        float_radius = 8
+        pet_x = base_x + math.cos(self.portal_pulse * 0.8) * float_radius
+        pet_y = base_y + math.sin(self.portal_pulse * 0.8) * float_radius
+        
+        # Leve rotação para dar efeito de flutuação
+        rotation_angle = math.sin(self.portal_pulse * 0.5) * 5  # ±5 graus
         
         # Tentar carregar imagem do pet
         pet_img = assets.get_image("pet")
         if pet_img:
             # Aumentado 1.5x (de 64 para 96 pixels)
             pet_scaled = pygame.transform.scale(pet_img, (96, 96))
-            screen.blit(pet_scaled, (pet_x, pet_y))
+            # Aplicar rotação
+            pet_rotated = pygame.transform.rotate(pet_scaled, rotation_angle)
+            pet_rect = pet_rotated.get_rect(center=(pet_x + 48, pet_y + 48))
+            screen.blit(pet_rotated, pet_rect)
             return
 
         # Fallback: Pet simples (cachorrinho/gato com roupa)
@@ -249,7 +276,7 @@ class MainMenuScene(Scene):
         # Corpo do pet
         pygame.draw.ellipse(screen, (200, 180, 160), (pet_x, pet_y + 15, 40*scale_f, 30*scale_f))
         # Cabeça
-        pygame.draw.circle(screen, (200, 180, 160), (pet_x + int(35*scale_f), pet_y + 15 + int(5*scale_f)), int(15*scale_f))
+        pygame.draw.circle(screen, (200, 180, 160), (int(pet_x + 35*scale_f), int(pet_y + 15 + 5*scale_f)), int(15*scale_f))
         # Orelhas
         pygame.draw.polygon(screen, (180, 160, 140), 
                           [(pet_x + int(25*scale_f), pet_y + 15 - int(5*scale_f)), 
@@ -258,7 +285,7 @@ class MainMenuScene(Scene):
         pygame.draw.polygon(screen, (180, 160, 140), 
                           [(pet_x + 40, pet_y - 8), (pet_x + 35, pet_y + 5), (pet_x + 45, pet_y - 5)])
         # Olhos
-        pygame.draw.circle(screen, (0, 0, 0), (pet_x + 32, pet_y + 3), 3)
-        pygame.draw.circle(screen, (0, 0, 0), (pet_x + 40, pet_y + 3), 3)
+        pygame.draw.circle(screen, (0, 0, 0), (int(pet_x + 32), int(pet_y + 3)), 3)
+        pygame.draw.circle(screen, (0, 0, 0), (int(pet_x + 40), int(pet_y + 3)), 3)
         # Roupa laranja (como na imagem)
-        pygame.draw.rect(screen, (255, 140, 0), (pet_x + 5, pet_y + 15, 30, 15), border_radius=3)
+        pygame.draw.rect(screen, (255, 140, 0), (int(pet_x + 5), int(pet_y + 15), 30, 15), border_radius=3)

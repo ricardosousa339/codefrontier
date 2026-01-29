@@ -5,7 +5,7 @@ import pygame
 import sys
 from src.config import SCREEN_WIDTH, SCREEN_HEIGHT, FPS, TITLE, Colors
 from src.utils import assets
-from src.scenes import MainMenuScene, VillageHubScene, ChallengeScene
+from src.scenes import MainMenuScene, VillageHubScene, ChallengeScene, LessonScene
 
 class Game:
     """Classe principal do jogo CodeFrontier"""
@@ -53,7 +53,8 @@ class Game:
         self.scenes = {
             "menu": MainMenuScene(self),
             "village": VillageHubScene(self),
-            "challenge": ChallengeScene(self)
+            "challenge": ChallengeScene(self),
+            "lesson": LessonScene(self)
         }
         
         # Começar no menu principal
